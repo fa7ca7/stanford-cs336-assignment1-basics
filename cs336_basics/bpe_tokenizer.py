@@ -1,12 +1,15 @@
-import regex as re
-from collections import Counter
-import pathlib
 import itertools
+import pathlib
+from collections import Counter
 from multiprocessing import Pool, cpu_count
+
+import regex as re
+
 from .pretokenization_example import find_chunk_boundaries
 
-
 PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
+EOF_SPECIAL_TOKEN = "<|endoftext|>"
+DEFAULT_SPECIAL_TOKENS = [EOF_SPECIAL_TOKEN]
 
 
 def pretokenize(input_path: str | pathlib.Path, start: int, end: int) -> dict[tuple[bytes], int]:
@@ -18,10 +21,12 @@ def pretokenize(input_path: str | pathlib.Path, start: int, end: int) -> dict[tu
     return dict(vocab)
 
 
-def pretokenize_parallel(input_path: str | pathlib.Path) -> dict[tuple[bytes], int]:
+def pretokenize_parallel(
+    input_path: str | pathlib.Path,
+) -> dict[tuple[bytes], int]:
     path = pathlib.Path(input_path)
     num_processes = cpu_count() - 1
-    eof_bytes = "<|endoftext|>".encode("utf-8")
+    eof_bytes = EOF_SPECIAL_TOKEN.encode("utf-8")
     with path.open("rb") as f:
         boundaries = find_chunk_boundaries(f, num_processes, eof_bytes)
     args = zip(itertools.repeat(input_path), boundaries[:-1], boundaries[1:])
