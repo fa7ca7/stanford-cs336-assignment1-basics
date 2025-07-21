@@ -39,7 +39,9 @@ def test_adamw(numpy_snapshot):
     actual_weights = _optimize(get_adamw_cls())
 
     # Might need to exit early if the weights match pytorch, since that should also be valid
-    matches_pytorch = torch.allclose(actual_weights, pytorch_weights, atol=1e-4)
+    matches_pytorch = torch.allclose(
+        actual_weights, pytorch_weights, atol=1e-4
+    )
     if matches_pytorch:
         return
 
@@ -92,4 +94,6 @@ def test_get_lr_cosine_schedule():
         )
         for it in range(25)
     ]
-    numpy.testing.assert_allclose(numpy.array(actual_lrs), numpy.array(expected_lrs))
+    numpy.testing.assert_allclose(
+        numpy.array(actual_lrs), numpy.array(expected_lrs)
+    )

@@ -1,9 +1,12 @@
 import dataclasses
 import itertools
+import json
 import os
 import pathlib
 from collections import Counter, defaultdict
+from collections.abc import Iterable, Iterator
 from multiprocessing import Pool, cpu_count
+from typing import Self
 
 import regex as re
 
@@ -34,9 +37,16 @@ def pretokenize(
         f.seek(start)
         chunk = f.read(end - start).decode("utf-8", errors="ignore")
     pattern = "|".join(map(re.escape, special_tokens))
-    words = (match.group() for text_part in re.split(pattern, chunk) for match in re.finditer(PAT, text_part))
+    words = (
+        match.group()
+        for text_part in re.split(pattern, chunk)
+        for match in re.finditer(PAT, text_part)
+    )
     vocab = Counter(words)
-    return {tuple(bytes([x]) for x in k.encode("utf-8")): v for k, v in vocab.items()}
+    return {
+        tuple(bytes([x]) for x in k.encode("utf-8")): v
+        for k, v in vocab.items()
+    }
 
 
 def pretokenize_parallel(
@@ -131,11 +141,15 @@ def train_bpe_tokenizer(
     merges = []
     byte_pairs, word_pos = compute_byte_pairs(pretokenized_corpus)
     while len_seeds + len(merges) < vocab_size:
-        max_occurance, merge_candidate = max((c[1], c[0]) for c in byte_pairs.most_common())
+        max_occurance, merge_candidate = max(
+            (c[1], c[0]) for c in byte_pairs.most_common()
+        )
         if max_occurance <= 0:
             break
         merges.append(merge_candidate)
-        merge_byte_pair(pretokenized_corpus, byte_pairs, word_pos, merge_candidate)
+        merge_byte_pair(
+            pretokenized_corpus, byte_pairs, word_pos, merge_candidate
+        )
     seeds += [b"".join(mc) for mc in merges]
     vocab = dict(enumerate(seeds))
     return vocab, merges
@@ -149,7 +163,10 @@ class BPETokenizer:
 
     @classmethod
     def from_files(
-        cls, vocab_filepath: os.PathLike, merges_filepath: os.PathLike, special_tokens: list[str] | None = None
+        cls,
+        vocab_filepath: os.PathLike,
+        merges_filepath: os.PathLike,
+        special_tokens: list[str] | None = None,
     ) -> Self:
         vocab_data = pathlib.Path(vocab_filepath).read_text(encoding="utf-8")
         vocab = json.loads(vocab_data)

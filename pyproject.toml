@@ -39,7 +39,7 @@ addopts = "-s"
 
 
 [tool.ruff]
-line-length = 120
+line-length = 79
 fix = true
 
 [tool.ruff.lint.extend-per-file-ignores]

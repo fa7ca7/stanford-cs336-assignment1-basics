@@ -20,13 +20,18 @@ class _TestNet(nn.Module):
         return x
 
 
-def are_optimizers_equal(optimizer1_state_dict, optimizer2_state_dict, atol=1e-8, rtol=1e-5):
+def are_optimizers_equal(
+    optimizer1_state_dict, optimizer2_state_dict, atol=1e-8, rtol=1e-5
+):
     # Check if the keys of the main dictionaries are equal (e.g., 'state', 'param_groups')
     if set(optimizer1_state_dict.keys()) != set(optimizer2_state_dict.keys()):
         return False
 
     # Check parameter groups are identical
-    if optimizer1_state_dict["param_groups"] != optimizer2_state_dict["param_groups"]:
+    if (
+        optimizer1_state_dict["param_groups"]
+        != optimizer2_state_dict["param_groups"]
+    ):
         return False
 
     # Check states
@@ -98,7 +103,9 @@ def test_checkpointing(tmp_path):
         betas=(0.9, 0.999),
         eps=1e-8,
     )
-    loaded_iterations = run_load_checkpoint(src=serialization_path, model=new_model, optimizer=new_optimizer)
+    loaded_iterations = run_load_checkpoint(
+        src=serialization_path, model=new_model, optimizer=new_optimizer
+    )
     assert it == loaded_iterations
 
     # Compare the loaded model state with the original model state
@@ -109,7 +116,9 @@ def test_checkpointing(tmp_path):
 
     # Check that state dict keys match
     assert set(original_model_state.keys()) == set(new_model_state.keys())
-    assert set(original_optimizer_state.keys()) == set(new_optimizer_state.keys())
+    assert set(original_optimizer_state.keys()) == set(
+        new_optimizer_state.keys()
+    )
 
     # compare the model state dicts
     for key in original_model_state.keys():
