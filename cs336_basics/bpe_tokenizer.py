@@ -1,8 +1,12 @@
+import dataclasses
 import itertools
+import json
 import os
 import pathlib
 from collections import Counter
+from collections.abc import Iterable, Iterator
 from multiprocessing import Pool, cpu_count
+from typing import Self
 
 import regex as re
 
@@ -113,3 +117,36 @@ def train_bpe_tokenizer(
         curr_vocab_size += 1
         merge_pretokenized_map(pretokenized_map, merge_candidate)
     return vocab, merges
+
+
+@dataclasses.dataclass
+class BPETokenizer:
+    vocab: dict[int, bytes]
+    merges: list[tuple[bytes, bytes]]
+    special_tokens: list[str] | None = None
+
+    @classmethod
+    def from_files(
+        cls, vocab_filepath: os.PathLike, merges_filepath: os.PathLike, special_tokens: list[str] | None = None
+    ) -> Self:
+        vocab_data = pathlib.Path(vocab_filepath).read_text(encoding="utf-8")
+        vocab = json.loads(vocab_data)
+        merges_data = pathlib.Path(merges_filepath).read_text(encoding="utf-8")
+        merges = json.loads(merges_data)
+        return Self(vocab=vocab, merges=merges, special_tokens=special_tokens)
+
+    def encode(self, text: str) -> list[int]:
+        """Encode an input text into a sequence of token IDs."""
+        pass
+
+    def encode_iterable(self, iterable: Iterable[str]) -> Iterator[int]:
+        """Given an iterable of
+        strings (e.g., a Python file handle), return a generator that lazily yields token IDs. This is
+        required for memory-eﬀicient tokenization of large files that we cannot directly load into
+        memory.
+        """
+        pass
+
+    def decode(self, ids: list[int]) -> str:
+        """Decode a sequence of token IDs into text."""
+        pass
